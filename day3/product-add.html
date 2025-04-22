@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <script src="https://code.jquery.com/jquery-3.7.1.js"
+        integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <title>product-add.html</title>
+</head>
+<style>
+    table,
+    tr,
+    td,
+    th {
+        border: 1px solid black;
+        border-collapse: collapse;
+        padding: 5px 10px;
+        text-align: center;
+    }
+</style>
+
+<body>
+    <div id="app">
+        <h1>🐈고양이 마켓🛒🎀🧸</h1>
+        <h2>🆕상품추가 및 수정</h2>
+        <div>
+            <div>제품 이름 : <input v-model="info.productName" placeholder="이름을 입력하세요."></div>
+            <div>설명 : <input v-model="info.description" placeholder="제품 설명을 입력하세요."></div>
+            <div>가격 : <input v-model="info.price" placeholder="제품 가격을 입력하세요."></div>
+            <div>재고 : <input v-model="info.stock" placeholder="재고를 입력하세요."></div>
+            <div>종류 : <input v-model="info.category" placeholder="제품 종류를 입력하세요."></div>
+        </div>
+        <div>
+            <button v-if="editFlg" @click="fnEidt">수정완료</button>
+            <button v-else @click="fnAdd">등록</button>
+            <a href="product-list.html"><button>목록보기</button></a>
+        </div>
+    </div>
+</body>
+
+</html>
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                info: {
+                    productName: "",
+                    description: "",
+                    price: "",
+                    stock: "",
+                    category: "",
+                },
+                editFlg : false,
+                productId : ""
+            };
+        },
+        methods: {
+            fnAdd() {
+                let self = this;
+                // post방식으로 보낼 때는 두 번째 파라미터로 map을 보내야 한다.
+                fetch("http://localhost:3000/product", {
+                    method: "POST",
+                    // 헤더의 데이터타입을 json으로 통일
+                    headers: {
+                        "content-type": "application/json"
+                    },
+                    // 민감한 정보는 바디에 숨겨서 보내야함.
+                    // server에서 받을 때는 json형태이기 때문에 map이 아니라 json으로 통일해야 함.
+                    body: JSON.stringify(self.info)
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log(data);
+                        alert(data.message);
+                    })
+                    .catch(err => {
+                        console.log("서버 에러");
+                    })
+            },
+            fnEidt (){
+                let self = this;
+                fetch("http://localhost:3000/product/" + self.productId, {
+                    method: "PUT",
+                    headers: {
+                        "content-type": "application/json"
+                    },
+                    body: JSON.stringify(self.info)
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert(data.message);
+                        location.href="product-list.html"
+                    })
+                    .catch(err => {
+                        console.log("서버 에러");
+                    })
+            },
+            fnGetInfo() {
+                let self = this;
+                console.log(self.productId)
+                fetch("http://localhost:3000/product/" + self.productId)
+                    .then(res => res.json())
+                    .then(data => {
+                        self.info = data.info;
+                    })
+            },
+            goToList() {
+                location.href = "product-list.html"
+            }
+
+
+        },
+        mounted() {
+            var self = this;
+            const queryParams = new URLSearchParams(window.location.search);
+            self.productId = queryParams.get('productId') || '';
+            if(self.productId != ""){
+                self.editFlg = true;
+                self.fnGetInfo();
+            }
+
+        }
+    });
+    app.mount('#app');
+</script>

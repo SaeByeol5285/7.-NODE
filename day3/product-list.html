@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <script src="https://code.jquery.com/jquery-3.7.1.js"
+        integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&display=swap" rel="stylesheet">
+    <title>product-list.html</title>
+</head>
+<style>
+    .container {
+        width: 800px;
+        height: 1000px;
+        margin: 20px auto;
+        background-color: rgba(255, 255, 255, 0.802);
+        padding: 20px;
+    }
+
+    table,
+    tr,
+    td,
+    th {
+        border: 1px solid black;
+        border-collapse: collapse;
+        padding: 8px 24px;
+        text-align: center;
+    }
+
+    .bagel-fat-one-regular {
+        font-family: "Bagel Fat One", system-ui;
+        font-weight: 400;
+        font-style: normal;
+    }
+
+    #app {
+        background-image: url(../day3/img/totoro.jpg);
+        background-repeat: repeat;
+    }
+
+    .title {
+        font-size: 50px;
+        text-align: center;
+        background-color: rgba(255, 255, 255, 0.764);
+    }
+
+    table {
+        background-color: rgb(253 254 223);
+        margin: 20px auto;
+    }
+
+    .btn {
+        padding: 10px 18px;
+        font-size: 15px;
+        border: none;
+        border-radius: 8px;
+        color: #444;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+        background-color: rgb(247 137 74);
+        color: white;
+    }
+
+    .btn.active {
+        background-color: rgb(247 137 74);
+        color: white;
+        font-weight: bold;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .pagination {
+        text-align: center;
+    }
+
+    .search-select {
+        text-align: right;
+        margin-right: 50px;
+    }
+</style>
+
+<body>
+    <div id="app">
+        <h1 class="bagel-fat-one-regular title">₍ᐢ. .ᐢ₎ 토토로 마켓🛒<span style="font-size: 30px;">⋆.ೃ࿔* :･🌱⋆.ೃ࿔* :･</span>
+        </h1>
+        <div class="container">
+            <div class="search-select">
+                <select v-model="pageSize" @change="fnGetList" style="min-width: 100px;">
+                    <option value="5">5개씩</option>
+                    <option value="10">10개씩</option>
+                    <option value="15">15개씩</option>
+                    <option value="20">20개씩</option>
+                </select>
+                <a href="product-add.html"><button style="margin-left: 10px;">상품추가</button></a>
+
+            </div>
+            <div class="table">
+                <table>
+                    <tr>
+                        <th>번호</th>
+                        <th>제품명</th>
+                        <th>가격</th>
+                        <th>재고</th>
+                        <th>종류</th>
+                        <th>수정</th>
+                        <th>삭제</th>
+                    </tr>
+                    <tr v-for="item in list">
+                        <td>{{item.productId}}</td>
+                        <td><a href="javascript:;" @click="fnView(item.productId)">🌱{{item.productName}}</a></td>
+                        <td>{{item.price}}</td>
+                        <td>{{item.stock}}</td>
+                        <td>{{item.category}}</td>
+                        <td><button @click="fnEdit(item.productId)">수정</button></td>
+                        <td><button @click="fnRemove(item.productId)">삭제</button></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="pagination">
+                <button class="btn" @click="page--" :disabled="page == 1">〈 이전</button>
+                <button v-for="n in index" :key="n" @click="page = n; fnGetList()"
+                    :class="['btn', page === n ? 'active' : '']">
+                    {{ n }}
+                </button>
+                <button class="btn" @click="page++" :disabled="page == index">다음 〉</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                list: [],
+                info: null,
+                boardNo: 0,
+                // 페이징
+                pageSize: 5,
+                page: 1,
+                index: 0,
+
+            };
+        },
+        methods: {
+            fnGetList() {
+                let self = this;
+                let offset = (self.page - 1) * self.pageSize;
+                fetch("http://localhost:3000/product?offset=" + offset + "&pageSize=" + self.pageSize)
+                    .then(res => res.json())
+                    .then(data => {
+                        self.list = data.list;
+                        self.index = Math.ceil(data.count / self.pageSize);
+                    })
+            },
+            fnView(productId) {
+                location.href = "product-view.html?productId=" + productId;
+            },
+            fnRemove(productId) {
+                let self = this;
+                if (!confirm("정말 삭제하시겠습니까?")) {
+                    return;
+                }
+                fetch("http://localhost:3000/product/" + productId, {
+                    method: "DELETE"
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert(data.message);
+                        self.fnGetList();
+                    })
+            },
+            fnEdit(productId) {
+                location.href = "product-add.html?productId=" + productId;
+            },
+
+
+        },
+        mounted() {
+            var self = this;
+            self.fnGetList();
+        }
+    });
+    app.mount('#app');
+</script>
