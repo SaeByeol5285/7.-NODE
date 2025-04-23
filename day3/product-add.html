@@ -30,6 +30,8 @@
             <div>가격 : <input v-model="info.price" placeholder="제품 가격을 입력하세요."></div>
             <div>재고 : <input v-model="info.stock" placeholder="재고를 입력하세요."></div>
             <div>종류 : <input v-model="info.category" placeholder="제품 종류를 입력하세요."></div>
+            <div>파일업로드 : <input type="file" @change="fnFileChange"></div>
+
         </div>
         <div>
             <button v-if="editFlg" @click="fnEidt">수정완료</button>
@@ -51,14 +53,18 @@
                     stock: "",
                     category: "",
                 },
-                editFlg : false,
-                productId : ""
+                editFlg: false,
+                productId: "",
+                selectedFile : "",
+
+
             };
         },
         methods: {
             fnAdd() {
                 let self = this;
                 // post방식으로 보낼 때는 두 번째 파라미터로 map을 보내야 한다.
+
                 fetch("http://localhost:3000/product", {
                     method: "POST",
                     // 헤더의 데이터타입을 json으로 통일
@@ -72,13 +78,16 @@
                     .then(res => res.json())
                     .then(data => {
                         console.log(data);
+                        if (self.selectedFile) {
+                            self.fnUploadFile(data.result.insertId);
+                        }
                         alert(data.message);
                     })
                     .catch(err => {
                         console.log("서버 에러");
                     })
             },
-            fnEidt (){
+            fnEidt() {
                 let self = this;
                 fetch("http://localhost:3000/product/" + self.productId, {
                     method: "PUT",
@@ -90,7 +99,7 @@
                     .then(res => res.json())
                     .then(data => {
                         alert(data.message);
-                        location.href="product-list.html"
+                        location.href = "product-list.html"
                     })
                     .catch(err => {
                         console.log("서버 에러");
@@ -107,7 +116,30 @@
             },
             goToList() {
                 location.href = "product-list.html"
+            },
+            fnFileChange() {
+                let self = this;
+                self.selectedFile = event.target.files[0];
+            },
+            fnUploadFile(productId) {
+                let self = this;
+                const formData = new FormData();
+                formData.append("file", self.selectedFile);
+                formData.append("productId", productId);
+                fetch("http://localhost:3000/product/upload", {
+                    method: "POST",
+                    body: formData
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log(data);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                    });
             }
+
+
 
 
         },
@@ -115,7 +147,7 @@
             var self = this;
             const queryParams = new URLSearchParams(window.location.search);
             self.productId = queryParams.get('productId') || '';
-            if(self.productId != ""){
+            if (self.productId != "") {
                 self.editFlg = true;
                 self.fnGetInfo();
             }

@@ -30,6 +30,11 @@
         text-align: center;
     }
 
+    th {
+        background-color: rgb(247 137 74);
+        color: white;
+    }
+
     .bagel-fat-one-regular {
         font-family: "Bagel Fat One", system-ui;
         font-weight: 400;
@@ -61,6 +66,7 @@
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
+        margin: 2px;
     }
 
     .btn:hover {
@@ -83,11 +89,17 @@
         text-align: right;
         margin-right: 50px;
     }
+
+    button {
+        background-color: rgb(186 216 10);
+        border-radius: 10px;
+    }
 </style>
 
 <body>
     <div id="app">
         <h1 class="bagel-fat-one-regular title">₍ᐢ. .ᐢ₎ 토토로 마켓🛒<span style="font-size: 30px;">⋆.ೃ࿔* :･🌱⋆.ೃ࿔* :･</span>
+            <button @click="fnLogout" class="btn">로그아웃</button>
         </h1>
         <div class="container">
             <div class="search-select">
@@ -108,8 +120,10 @@
                         <th>가격</th>
                         <th>재고</th>
                         <th>종류</th>
-                        <th>수정</th>
-                        <th>삭제</th>
+                        <template v-if="user.sessionStatus == 'A'">
+                            <th>수정</th>
+                            <th>삭제</th>
+                        </template>
                     </tr>
                     <tr v-for="item in list">
                         <td>{{item.productId}}</td>
@@ -117,18 +131,20 @@
                         <td>{{item.price}}</td>
                         <td>{{item.stock}}</td>
                         <td>{{item.category}}</td>
-                        <td><button @click="fnEdit(item.productId)">수정</button></td>
-                        <td><button @click="fnRemove(item.productId)">삭제</button></td>
+                        <template v-if="user.sessionStatus == 'A'">
+                            <td><button @click="fnEdit(item.productId)">수정</button></td>
+                            <td><button @click="fnRemove(item.productId)">삭제</button></td>
+                        </template>
                     </tr>
                 </table>
             </div>
             <div class="pagination">
-                <button class="btn" @click="page--" :disabled="page == 1">〈 이전</button>
+                <button class="btn" @click="page--; fnGetList()" :disabled="page == 1">〈 이전</button>
                 <button v-for="n in index" :key="n" @click="page = n; fnGetList()"
                     :class="['btn', page === n ? 'active' : '']">
                     {{ n }}
                 </button>
-                <button class="btn" @click="page++" :disabled="page == index">다음 〉</button>
+                <button class="btn" @click="page++; fnGetList()" :disabled="page == index">다음 〉</button>
             </div>
         </div>
     </div>
@@ -146,7 +162,7 @@
                 pageSize: 5,
                 page: 1,
                 index: 0,
-
+                user: {}
             };
         },
         methods: {
@@ -180,12 +196,39 @@
             fnEdit(productId) {
                 location.href = "product-add.html?productId=" + productId;
             },
-
-
+            fnLogout() {
+                let self = this;
+                fetch("http://localhost:3000/user/logout", {
+                    method: "GET",
+                    credentials: "include"
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert(data.message);
+                        location.href = "../day4/login.html"
+                    })
+            }
         },
         mounted() {
             var self = this;
-            self.fnGetList();
+            //서버한테 집 카드키 같은 cookie를 보낸다. 
+            //why? 정당한 사용자인지 아닌지 확인하기 위해서
+            fetch("http://localhost:3000/user/info", {
+                method: "GET",
+                credentials: "include"
+            })
+                .then(res => res.json())
+                .then(data => {
+                    console.log(data);
+                    if (data.isLogin) {
+                        self.user = data.user;
+                        self.fnGetList();
+                    } else {
+                        alert("로그인 후 이용해주세요.");
+                        location.href = "../day4/login.html"
+                    }
+
+                })
         }
     });
     app.mount('#app');

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+	<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+	<title>login.html</title>
+</head>
+<style>
+
+</style>
+<body>
+	<div id="app">
+        <h1>로그인</h1>
+        <div>아이디 : <input v-model="info.userId"></div>
+        <div>비밀번호 : <input v-model="info.pwd" @keyup.enter="fnLogin"></div>
+        <button @click="fnLogin">로그인</button>
+        <a href="join.html"><button>회원가입</button></a>
+	</div>
+</body>
+</html>
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                info : {
+                    userId : "",
+                    pwd : "",
+                }
+            };
+        },
+        methods: {
+            fnLogin(){
+                let self = this;
+				fetch("http://localhost:3000/user", {
+                    method : "POST",
+                    headers: {
+                        "content-type": "application/json"
+                    },
+                    credentials : "include",
+                    body: JSON.stringify(self.info)
+                    // 아래의 방법도 가능함
+                    //body: JSON.stringify({
+                    //        userId : self.userId
+                    //         pwd : self.pwd })
+                    // })
+                })
+                    .then( res => res.json() )
+                    .then( data => {
+                        if(data.pass){
+                            self.info = data.user;
+                            alert(data.message);
+                            location.href="../day3/product-list.html";
+                        }else{
+                            alert(data.message);
+                            self.info.userId = "";
+                            self.info.pwd = "";
+                        }
+                    } )
+            }
+        },
+        mounted() {
+            var self = this;
+        }
+    });
+    app.mount('#app');
+</script>
