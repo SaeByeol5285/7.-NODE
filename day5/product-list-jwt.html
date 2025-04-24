@@ -120,7 +120,7 @@
                         <th>가격</th>
                         <th>재고</th>
                         <th>종류</th>
-                        <template v-if="user.sessionStatus == 'A'">
+                        <template v-if="user.userStatus == 'A'">
                             <th>수정</th>
                             <th>삭제</th>
                         </template>
@@ -131,7 +131,7 @@
                         <td>{{item.price}}</td>
                         <td>{{item.stock}}</td>
                         <td>{{item.category}}</td>
-                        <template v-if="user.sessionStatus == 'A'">
+                        <template v-if="user.userStatus == 'A'">
                             <td><button @click="fnEdit(item.productId)">수정</button></td>
                             <td><button @click="fnRemove(item.productId)">삭제</button></td>
                         </template>
@@ -185,7 +185,11 @@
                     return;
                 }
                 fetch("http://localhost:3000/product/" + productId, {
-                    method: "DELETE"
+                    method: "DELETE",
+                    headers: {
+                        // 안전한 통신 방법
+                        "authorization": "Bearer " + localStorage.getItem("token")
+                    }
                 })
                     .then(res => res.json())
                     .then(data => {
@@ -211,26 +215,18 @@
         },
         mounted() {
             var self = this;
-            //서버한테 집 카드키 같은 cookie를 보낸다. 
-            //why? 정당한 사용자인지 아닌지 확인하기 위해서
+            let token = localStorage.getItem('token');
 
-            //세션 검증
-            fetch("http://localhost:3000/user/info", {
-                method: "GET",
-                credentials: "include"
-            })
-                .then(res => res.json())
-                .then(data => {
-                    console.log(data);
-                    if (data.isLogin) {
-                        self.user = data.user;
-                        self.fnGetList();
-                    } else {
-                        alert("로그인 후 이용해주세요.");
-                        location.href = "../day4/login.html"
-                    }
-
-                })
+            if (token) {
+                const base64Payload = token.split('.')[1];
+                const payload = atob(base64Payload); // base64 디코딩
+                let user = JSON.parse(payload); // JSON으로 파싱
+                self.user = user;
+                self.fnGetList();
+            } else {
+                alert("로그인 후 이용해주세요.");
+                location.href = "../day4/login.html"
+            }
         }
     });
     app.mount('#app');

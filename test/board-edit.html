@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <script src="https://code.jquery.com/jquery-3.7.1.js"
+        integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <title>board-edit.html</title>
+</head>
+
+<body>
+    <div id="app">
+        <h1 v-if="editFlg">게시글 수정</h1>
+        <h1 v-else>글쓰기</h1>
+        <div>
+            <div>제목 : <input v-model="info.title"></div>
+            <div>내용 : <input v-model="info.contents" style="width: 700px;"></div>
+        </div>
+        <div>
+            <button v-if="editFlg" @click="fnEdit">저장</button>
+            <button v-else @click="fnAdd">등록</button>
+            <a href="board-list.html"><button>목록보기</button></a>
+        </div>
+    </div>
+</body>
+
+</html>
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                info: {
+                    title: "",
+                    contents: ""
+                },
+                editFlg: false,
+                boardNo: "",
+            };
+        },
+        methods: {
+            fnEdit() {
+                let self = this;
+                fetch("http://localhost:3000/board/" + self.boardNo, {
+                    method: "PUT",
+                    headers: {
+                        "content-type": "application/json"
+                    },
+                    body: JSON.stringify(self.info)
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert(data.message);
+                        location.href = "board-list.html"
+                    })
+                    .catch(err => {
+                        console.log("서버 에러");
+                    })
+            },
+            fnGetInfo() {
+                let self = this;
+                fetch("http://localhost:3000/board/" + self.boardNo + "?isEdit=" + "")
+                    .then(res => res.json())
+                    .then(data => {
+                        self.info = data.info;
+                        console.log(data);
+                    })
+            },
+            fnAdd() {
+                let self = this;
+                fetch("http://localhost:3000/board", {
+                    method: "POST",
+                    headers: {
+                        "content-type": "application/json"
+                    },
+                    body: JSON.stringify(self.info)
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log(data);
+                        alert(data.message);
+                        location.href="board-list.html";
+                    })
+                    .catch(err => {
+                        console.log("서버 에러");
+                    })
+            },
+
+
+        },
+        mounted() {
+            var self = this;
+            const queryParams = new URLSearchParams(window.location.search);
+            self.boardNo = queryParams.get('boardNo') || '';
+            if (self.boardNo != "") {
+                self.editFlg = true;
+                self.fnGetInfo();
+            } 
+
+        }
+    });
+    app.mount('#app');
+</script>

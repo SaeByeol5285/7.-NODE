@@ -14,7 +14,9 @@
         <h1>로그인</h1>
         <div>아이디 : <input v-model="info.userId"></div>
         <div>비밀번호 : <input v-model="info.pwd" @keyup.enter="fnLogin"></div>
-        <button @click="fnLogin">로그인</button>
+        <button @click="fnLogin">로그인(세션)</button>
+        <button @click="fnLoginJWT">로그인(JWT)</button>
+
         <a href="join.html"><button>회원가입</button></a>
 	</div>
 </body>
@@ -57,7 +59,34 @@
                             self.info.pwd = "";
                         }
                     } )
-            }
+            },
+            fnLoginJWT(){
+                let self = this;
+				fetch("http://localhost:3000/login", {
+                    method : "POST",
+                    headers: {
+                        "content-type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        userId : self.info.userId,
+                        pwd : self.info.pwd
+                    })
+                })
+                    .then( res => res.json() )
+                    .then( data => {
+                        if(data.pass){
+                            console.log(data.token);
+                            localStorage.setItem("token",data.token);
+                            self.info = data.user;
+                            alert(data.message);
+                            location.href="../day5/product-list-jwt.html";
+                        }else{
+                            alert(data.message);
+                            self.info.userId = "";
+                            self.info.pwd = "";
+                        }
+                    } )
+            },
         },
         mounted() {
             var self = this;

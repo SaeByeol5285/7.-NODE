@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+	<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+	<title>board-list.html</title>
+</head>
+<style>
+    table, tr, td, th{
+        border : 1px solid black;
+        border-collapse: collapse;
+        padding : 5px 10px;
+        text-align: center;
+    }
+</style>
+<body>
+	<div id="app">
+		<table>
+            <tr>
+                <th>제목</th>
+                <th>작성자 이름</th>
+                <th>조회수</th>
+                <th>작성일</th>
+            </tr>
+            <tr v-for="item in list">
+                <td><a href="javascript:;" @click="fnView(item.boardNo)">{{item.title}}</a></td>
+                <td>{{item.userName}}</td>
+                <td>{{item.cnt}}</td>
+                <td>{{item.cdatetime}}</td>
+            </tr>
+        </table>
+        <a href="board-edit.html"><button>글쓰기</button></a>
+        <button v-if="listOption == 'normal'" @click="fnChangeOption()">인기게시글</button>
+        <button v-else @click="fnChangeOption()">전체게시글</button>
+
+        <div style="margin-top : 300px"></div>
+	</div>
+</body>
+</html>
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                list : [],
+                listOption : "normal"
+            };
+        },
+        methods: {
+            fnGetList(){
+                let self = this;
+				fetch("http://localhost:3000/board?listOption="+self.listOption)
+                    .then( res => res.json() )
+                    .then( data => {
+                        if(data.message == "success"){
+                            console.log(data);
+                            self.list = data.list;
+                        } else{
+                            console.log("데이터 가져오기 실패");
+                        }
+
+                    } )
+            },
+            fnChangeOption() {
+                let self = this;
+                self.listOption = self.listOption == 'normal' ? 'popular' : 'normal';
+                self.fnGetList(); 
+            },
+            fnView(boardNo){
+                location.href="../test/board-view.html?boardNo="+boardNo;
+            },
+        },
+        mounted() {
+            var self = this;
+            self.fnGetList();
+            
+        }
+    });
+    app.mount('#app');
+</script>
